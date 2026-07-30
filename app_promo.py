@@ -29,10 +29,7 @@ def _normalize_merge_key(val):
     s = s.replace("-1-", "-")
     s = s.replace("-2-", "-")
     s = s.replace("AB", "BC")
-<<<<<<< HEAD
     s = s.replace("MH", "BC")
-=======
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
     s = s.replace("SAN", "BC")
     s = s.split()[0]  # Pega só a primeira parte antes de espaços
     s = s.strip()
@@ -45,7 +42,6 @@ def _normalize_merge_key(val):
     return '-'.join(take)
 
 
-<<<<<<< HEAD
 def _deduplicate_columns(df):
     df = df.copy()
     cols = list(df.columns)
@@ -80,76 +76,6 @@ def _suggest_column(columns, aliases):
 
 st.set_page_config("Gerenciador de Promoções Shein", layout="wide")
 st.title("📊 Gerenciador de Promoções para a Shein")
-=======
-def _auto_detect_header_from_excel(file, sheet_name, max_rows=10):
-    try:
-        tmp = pd.read_excel(file, sheet_name=sheet_name, header=None, nrows=max_rows)
-    except Exception:
-        return 0
-
-    aliases = [
-        'skc', 'sku', 'número do item', 'numero do item', 'numero', 'número', 'item',
-        'id do anúncio', 'id do anuncio', 'id', 'ean', 'gtin', 'preço', 'preco', 'valor'
-    ]
-
-    for i in range(len(tmp)):
-        row = tmp.iloc[i].astype(str).str.lower().tolist()
-        matches = sum(any(a in c for a in aliases) for c in row)
-        if matches >= 1:
-            return i
-    return 0
-
-
-def _suggest_column(columns, aliases):
-    cols = list(columns)
-    lcols = [c.lower() for c in cols]
-
-    # exact
-    for a in aliases:
-        if a in lcols:
-            return cols[lcols.index(a)]
-
-    # contains
-    for idx, c in enumerate(lcols):
-        for a in aliases:
-            if a in c:
-                return cols[idx]
-
-    # fuzzy
-    for a in aliases:
-        m = difflib.get_close_matches(a, lcols, n=1)
-        if m:
-            return cols[lcols.index(m[0])]
-
-    return None
-
-def _deduplicate_columns(df):
-    counts = {}
-    new_columns = []
-    renamed = {}
-
-    for col in df.columns:
-        base = str(col).strip()
-        counts[base] = counts.get(base, 0) + 1
-        if counts[base] == 1:
-            new_columns.append(base)
-            continue
-
-        new_name = f"{base}__{counts[base]}"
-        new_columns.append(new_name)
-        renamed.setdefault(base, []).append(new_name)
-
-    if renamed:
-        df = df.copy()
-        df.columns = new_columns
-
-    return df, renamed
-
-# ================= APP =================
-
-st.set_page_config("Gerenciador de Promoções", layout="wide")
-st.title("📊 Gerenciador de Promoções por Marketplace")
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
 
 # ================= SIDEBAR =================
 
@@ -167,7 +93,6 @@ with st.sidebar:
     st.sidebar.write("### Selecione sheet e linha de cabeçalho (quando aplicável)")
 
     # SKUs file
-<<<<<<< HEAD
     df_skus = pd.read_excel(arquivo_skus)
 
     # Preços file
@@ -193,79 +118,6 @@ with st.sidebar:
     except Exception:
         df_precos = pd.read_excel(arquivo_precos, sheet_name=sheet_precos, header=header_row_precos)
     
-=======
-    if arquivo_skus.name.lower().endswith(("xls", "xlsx")):
-        xls_skus = pd.ExcelFile(arquivo_skus)
-        # Ignora sempre a sheet 'hidden' (case-insensitive)
-        sheet_names_skus = [s for s in xls_skus.sheet_names if s.strip().lower() != 'hidden']
-        # Sugerir sheet: prioriza 'Promoções' (case-insensitive), depois SKU, ID, PRODUTO, ITENS, ou a primeira
-        if any(s.lower() == 'promoções' for s in sheet_names_skus):
-            sheet_skus_sug = next(s for s in sheet_names_skus if s.lower() in ('promoções', 'Planiha1'))
-        else:
-            sheet_skus_sug = next((s for s in sheet_names_skus if any(w in s.lower() for w in ["sku", "id", "produto", "itens"])), sheet_names_skus[0])
-        idx_sug = sheet_names_skus.index(sheet_skus_sug)
-        sheet_skus = st.selectbox("Sheet (SKUs)", sheet_names_skus, index=idx_sug, key="sheet_skus")
-
-        # Sugerir header: busca linha com maior match de aliases
-        def _find_best_header(file, sheet, aliases, max_rows=10):
-            tmp = pd.read_excel(file, sheet_name=sheet, header=None, nrows=max_rows)
-            best = 0
-            best_score = 0
-            for i in range(len(tmp)):
-                row = tmp.iloc[i].astype(str).str.lower().tolist()
-                score = sum(any(a in c for a in aliases) for c in row)
-                if score > best_score:
-                    best = i
-                    best_score = score
-            return best
-
-        aliases_header = ["sku", "produto", "item", "skc", "número", "numero"]
-        header_skus_sug = _find_best_header(arquivo_skus, sheet_skus, aliases_header)
-        header_row_skus_1b = st.number_input("Linha do cabeçalho (SKUs) - 1-based, 0=auto", min_value=0, max_value=50, value=header_skus_sug+1, key="header_skus")
-        header_skus = header_row_skus_1b
-        df_skus = pd.read_excel(arquivo_skus, sheet_name=sheet_skus, header=header_skus)
-    else:
-        header_row_skus_1b = st.number_input("Linha do cabeçalho (SKUs) - 1-based, 0=auto (CSV)", min_value=0, max_value=50, value=0, key="header_skus_csv")
-        if header_row_skus_1b == 0:
-            df_skus = pd.read_csv(arquivo_skus)
-        else:
-            df_skus = pd.read_csv(arquivo_skus, header=header_row_skus_1b)
-
-    # Preços file
-    if arquivo_precos.name.lower().endswith(("xls", "xlsx")):
-        xls_precos = pd.ExcelFile(arquivo_precos)
-        # Ignora sempre a sheet 'hidden' (case-insensitive)
-        sheet_names_precos = [s for s in xls_precos.sheet_names if s.strip().lower() != 'hidden']
-        # default to PROMOÇÃO sheet when present (case-insensitive)
-        def _find_default_sheet(names):
-            for i, s in enumerate(names):
-                if s.strip().lower() in ("promoção", "promocaO", "promocao"):
-                    return i
-                if s.strip().lower() in ("promoção", "promocao"):
-                    return i
-            return 0
-
-        default_idx = next((i for i, s in enumerate(sheet_names_precos) if s.strip().lower() in ("promoção", "promocao")), 0)
-        sheet_precos = st.selectbox("Sheet (Preços)", sheet_names_precos, index=default_idx, key="sheet_precos")
-        header_row_precos_1b = st.number_input("Linha do cabeçalho (Preços) - 1-based, 0=auto", min_value=0, max_value=50, value=0, key="header_precos")
-        if header_row_precos_1b == 0:
-            detected_p = _auto_detect_header_from_excel(arquivo_precos, sheet_precos)
-            header_precos = detected_p
-            st.sidebar.write(f"Detectado header em linha {detected_p+1} para Preços")
-        else:
-            header_precos = header_row_precos_1b - 1
-        # usamos a função que preserva fórmulas quando necessário
-        try:
-            df_precos = ler_excel_promocao_com_formulas(arquivo_precos, sheet_name=sheet_precos, header_row=header_precos)
-        except Exception:
-            df_precos = pd.read_excel(arquivo_precos, sheet_name=sheet_precos, header=header_precos)
-    else:
-        header_row_precos_1b = st.number_input("Linha do cabeçalho (Preços) - 1-based, 0=auto (CSV)", min_value=0, max_value=50, value=0, key="header_precos_csv")
-        if header_row_precos_1b == 0:
-            df_precos = pd.read_csv(arquivo_precos)
-        else:
-            df_precos = pd.read_csv(arquivo_precos, header=header_row_precos_1b - 1)
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
 
     # Normaliza nomes de colunas (remove espaços invisíveis)
     df_skus.columns = df_skus.columns.astype(str).str.strip()
@@ -286,28 +138,13 @@ with st.sidebar:
 
     df_precos = df_precos.loc[:, [c for c in df_precos.columns if not any(r in c.lower() for r in colunas_remover)]]
 
-<<<<<<< HEAD
 
     df_skus = df_skus.loc[:, [c for c in df_skus.columns if not any(m in c.lower() for m in ['shein'])]]
-=======
-    # Remove colunas de marketplace do df_skus
-    marketplaces = ["mercado", "shopee", "shein", "magalu", "netshoes", "kwai", "tiktok", "mercado livre"]
-    df_skus = df_skus.loc[:, [c for c in df_skus.columns if not any(m in c.lower() for m in marketplaces)]]
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
 
     st.success("✅ Arquivos carregados")
 
     st.divider()
 
-<<<<<<< HEAD
-=======
-    # Primeiro escolha o marketplace (necessário para decisões seguintes)
-    marketplace = st.selectbox(
-        "Marketplace",
-        ["Mercado Livre", "Shopee", "Shein", "Magalu","Netshoes", "Kwai", "TikTok", "Outro"],
-        key="marketplace_select"
-    )
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
 
     # --- Mapeamento de colunas (auto-sugestão básica) ---
     st.sidebar.write("### Mapeamento de colunas (ajuste se necessário)")
@@ -315,11 +152,7 @@ with st.sidebar:
     # sugestões para SKUs
     skc_aliases = ["skc"]
     num_item_aliases = ["número do item", "numero do item", "item number", "item no", "numero item"]
-<<<<<<< HEAD
     sku_aliases = ["Número do item", "numero do item", "item number", "item no", "numero item", "sku", "id", "id sku"]
-=======
-    sku_aliases = ["sku", "id do anúncio", "id do anuncio", "id", "seller id"]
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
 
     # Recalcula sugestões sempre após leitura do df_skus
     def _auto_suggest(df, aliases):
@@ -337,7 +170,6 @@ with st.sidebar:
     sugestao_skc = _auto_suggest(df_skus, skc_aliases)
     sugestao_sku = _auto_suggest(df_skus, sku_aliases)
 
-<<<<<<< HEAD
 
     col_skc_sel = st.selectbox(
         "Coluna SKC (se existir)",
@@ -345,18 +177,6 @@ with st.sidebar:
         index=(1 + list(df_skus.columns).index(sugestao_skc) if sugestao_skc in df_skus.columns else 0),
         key="col_skc_sel"
     )
-=======
-    # Mostra SKC / Número do item apenas para Shein
-    if marketplace.lower() == "shein":
-        col_skc_sel = st.selectbox(
-            "Coluna SKC (se existir)",
-            ["(nenhuma)"] + list(df_skus.columns),
-            index=(1 + list(df_skus.columns).index(sugestao_skc) if sugestao_skc in df_skus.columns else 0),
-            key="col_skc_sel"
-        )
-    else:
-        col_skc_sel = None
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
 
     col_match_skus = st.selectbox(
         "Coluna de match (SKUs)",
@@ -371,11 +191,7 @@ with st.sidebar:
     sugestao_price = _suggest_column(df_precos.columns, price_aliases)
     sugestao_precos_match = _suggest_column(df_precos.columns, sku_aliases + num_item_aliases)
 
-<<<<<<< HEAD
     colunas_match_precos = [c for c in df_precos.columns if not any(m in c.lower() for m in ['shein'])]
-=======
-    colunas_match_precos = [c for c in df_precos.columns if not any(m in c.lower() for m in marketplaces)]
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
     col_match_precos = st.selectbox(
         "Coluna de match (Preços)",
         colunas_match_precos,
@@ -384,18 +200,10 @@ with st.sidebar:
     )
 
     # Filtra colunas de preço relacionadas ao marketplace selecionado
-<<<<<<< HEAD
     def _colunas_preco_marketplace(cols):
         return [c for c in cols if 'shein' in c.lower()]
 
     colunas_preco_filtradas = _colunas_preco_marketplace(df_precos.columns)
-=======
-    def _colunas_preco_marketplace(cols, marketplace):
-        mkt = marketplace.lower()
-        return [c for c in cols if mkt in c.lower()]
-
-    colunas_preco_filtradas = _colunas_preco_marketplace(df_precos.columns, marketplace)
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
     # Garante que pelo menos uma coluna apareça
     if not colunas_preco_filtradas:
         colunas_preco_filtradas = list(df_precos.columns)
@@ -470,20 +278,11 @@ df_precos = df_precos.drop_duplicates(subset=["_MERGE_KEY"], keep="first")
 # Opção: colapsar linhas idênticas por SKC (útil para Shein)
 collapse_skc = False
 collapse_post_merge = False
-<<<<<<< HEAD
 
 st.sidebar.write(f"Detectado SKC: {skc_col}")
 collapse_skc = st.sidebar.checkbox("Colapsar linhas idênticas por SKC", value=True)
 
 if collapse_skc:
-=======
-if marketplace.lower() == "shein":
-    # Mostrar quais colunas foram detectadas (ajuda debugging)
-    st.sidebar.write(f"Detectado SKC: {skc_col}")
-    collapse_skc = st.sidebar.checkbox("Colapsar linhas idênticas por SKC", value=True)
-
-if collapse_skc and marketplace.lower() == "shein":
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
     # Se houver SKC em df_precos, colapsa antes do merge; se houver apenas em
     # df_skus, agendamos o colapso para depois do merge.
     if skc_col and skc_col in df_precos.columns:
@@ -596,11 +395,7 @@ with tab3:
     df_final[col_preco] = df_final[col_preco].round(2)
 
     # Para Shein: se detectamos a coluna `SKC`, exportamos `SKC` + preço de campanha
-<<<<<<< HEAD
     if skc_col and skc_col in df_final.columns:
-=======
-    if marketplace.lower() == "shein" and skc_col and skc_col in df_final.columns:
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
         df_export = df_final[[skc_col, col_preco]].copy()
         df_export = df_export.rename(columns={
             skc_col: "SKC (obrigatório)",
@@ -611,11 +406,7 @@ with tab3:
 
         df_export = df_export.rename(columns={
             "ID_BASE": "ID",
-<<<<<<< HEAD
             col_preco: f"Preço de campanha"
-=======
-            col_preco: f"Preço {marketplace}"
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
         })
 
     st.info(f"📊 {len(df_export)} registros prontos")
@@ -627,11 +418,7 @@ with tab3:
     st.download_button(
         "📥 Baixar Excel",
         buffer.getvalue(),
-<<<<<<< HEAD
         file_name=f"promo_shein_{datetime.now():%d%m%Y_%H%M}.xlsx",
-=======
-        file_name=f"promo_{marketplace}_{datetime.now():%d%m%Y_%H%M}.xlsx",
->>>>>>> 9c5d8dda331e0521e90618917fe2529b81e7ecae
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
         type="primary"
