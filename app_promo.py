@@ -171,12 +171,7 @@ with st.sidebar:
     sugestao_sku = _auto_suggest(df_skus, sku_aliases)
 
 
-    col_skc_sel = st.selectbox(
-        "Coluna SKC (se existir)",
-        ["(nenhuma)"] + list(df_skus.columns),
-        index=(1 + list(df_skus.columns).index(sugestao_skc) if sugestao_skc in df_skus.columns else 0),
-        key="col_skc_sel"
-    )
+    col_skc_sel = 'SKC'
 
     col_match_skus = st.selectbox(
         "Coluna de match (SKUs)",
@@ -214,10 +209,6 @@ with st.sidebar:
         index=(colunas_preco_filtradas.index(sugestao_price) if sugestao_price in colunas_preco_filtradas else 0),
         key="col_preco_map"
     )
-
-    # Normaliza seleção de "(nenhuma)"
-    if col_skc_sel == "(nenhuma)":
-        col_skc_sel = None
 
     # Exibe pré-visualizações rápidas para ajudar a confirmar mapeamento
     st.sidebar.write("Preview SKUs:")
