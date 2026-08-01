@@ -263,8 +263,6 @@ df_precos = df_precos.explode("_MERGE_KEY")
 df_precos["_MERGE_KEY"] = df_precos["_MERGE_KEY"].astype(str).str.replace(".0","", regex=False).str.strip()
 df_precos["_MERGE_KEY"] = df_precos["_MERGE_KEY"].apply(_normalize_merge_key)
 
-# Remove duplicidade: mantém apenas a primeira referência de cada _MERGE_KEY
-df_precos = df_precos.drop_duplicates(subset=["_MERGE_KEY"], keep="first")
 
 # Opção: colapsar linhas idênticas por SKC (útil para Shein)
 collapse_skc = False
