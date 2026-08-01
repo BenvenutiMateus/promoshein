@@ -219,6 +219,12 @@ with st.sidebar:
 # ================= PROCESSAMENTO =================
 
 # 🔒 Coluna canônica de ID (NUNCA some)
+if "SKU" in df_skus.columns and "SKU_SHEIN" not in df_skus.columns:
+    df_skus = df_skus.rename(columns={"SKU": "SKU_SHEIN"})
+
+if col_match_skus == "SKU":
+    col_match_skus = "SKU_SHEIN"
+
 df_skus["ID_BASE"] = df_skus[col_match_skus]
 
 df_skus["_MERGE_KEY"] = (
@@ -384,17 +390,21 @@ with tab3:
     df_final[col_preco] = df_final[col_preco].round(2)
 
     # Para Shein: se detectamos a coluna `SKC`, exportamos `SKC` + preço de campanha
+    sku_export_col = "SKU_SHEIN" if "SKU_SHEIN" in df_final.columns else "SKU" if "SKU" in df_final.columns else None
+
     if skc_col and skc_col in df_final.columns:
-        df_export = df_final[[skc_col,'SKU', col_preco]].copy()
+        df_export = df_final[[skc_col, sku_export_col, col_preco]].copy()
         df_export = df_export.rename(columns={
             skc_col: "SKC (obrigatório)",
+            sku_export_col: "SKU_SHEIN",
             col_preco: f"Preço de campanha"
         })
     else:
-        df_export = df_final[["ID_BASE", "SKU", col_preco]].copy()
+        df_export = df_final[["ID_BASE", sku_export_col, col_preco]].copy()
 
         df_export = df_export.rename(columns={
             "ID_BASE": "ID",
+            sku_export_col: "SKU_SHEIN",
             col_preco: f"Preço de campanha"
         })
 
