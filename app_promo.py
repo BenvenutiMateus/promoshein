@@ -379,19 +379,19 @@ with tab3:
 
     # Trata #REF!, texto, etc
     df_final[col_preco] = pd.to_numeric(df_final[col_preco], errors="coerce")
-    # Preenche valores não encontrados com 0
-    df_final[col_preco] = df_final[col_preco].fillna(0)
+    # Preenche valores não encontrados com -1
+    df_final[col_preco] = df_final[col_preco].fillna(-1)
     df_final[col_preco] = df_final[col_preco].round(2)
 
     # Para Shein: se detectamos a coluna `SKC`, exportamos `SKC` + preço de campanha
     if skc_col and skc_col in df_final.columns:
-        df_export = df_final[[skc_col, col_preco]].copy()
+        df_export = df_final[[skc_col,'SKU', col_preco]].copy()
         df_export = df_export.rename(columns={
             skc_col: "SKC (obrigatório)",
             col_preco: f"Preço de campanha"
         })
     else:
-        df_export = df_final[["ID_BASE", col_preco]].copy()
+        df_export = df_final[["ID_BASE", "SKU", col_preco]].copy()
 
         df_export = df_export.rename(columns={
             "ID_BASE": "ID",
